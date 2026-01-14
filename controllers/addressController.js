@@ -3,7 +3,7 @@ const expressAsyncHandler = require('express-async-handler');
 
 const myaddresses = expressAsyncHandler(async(req,res)=>{
     const user = req.user;
-    const data = await User.findById(user._Id).select('address');
+    const data = await User.findById(user._id).select('address');
     if(!data){
         return res.status(404).json({message:"No addresses found"});
     }
@@ -16,7 +16,7 @@ const addaddress = expressAsyncHandler(async(req,res)=>{
     if(!address){
         return res.status(400).json({message:"Address is required"});
     }
-    const data = await User.findByIdAndUpdate(user._Id,({$push:{address:address}}),{new:true}).select('address');
+    const data = await User.findByIdAndUpdate(user._id,({$push:{address:address}}),{new:true}).select('address');
     if(!data){
         return res.status(500).json({message:"Failed to add address"});
     }
@@ -29,7 +29,7 @@ const deleteaddress = expressAsyncHandler(async(req,res)=>{
     if(!address){
         return res.status(400).json({message:"Address is required"});
     }
-    const data = await User.findByIdAndUpdate(user._Id,({$pull:{address:address}}),{new:true}).select('address');
+    const data = await User.findByIdAndUpdate(user._id,({$pull:{address:address}}),{new:true}).select('address');
     if(!data){
         return res.status(500).json({message:"Failed to delete address"});
     }
@@ -43,7 +43,7 @@ const updateaddress = expressAsyncHandler(async(req,res)=>{
     if(!oldAddress || !newAddress){
         return res.status(400).json({message:"Both old and new addresses are required"});
     }
-    const data = await User.findById(user._Id);
+    const data = await User.findById(user._id);
     if(!data){
         return res.status(404).json({message:"User not found"});
     }
