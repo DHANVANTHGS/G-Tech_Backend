@@ -1,0 +1,59 @@
+const User = require('../model/User');
+const expressAsyncHandler = require('express-async-handler');
+
+const myaddresses = expressAsyncHandler(async(req,res)=>{
+    const user = req.user;
+    const data = await User.findById(user._Id).select('address');
+    if(!data){
+        return res.status(404).json({message:"No addresses found"});
+    }
+    return res.status(200).json(data);
+});
+
+const addaddress = expressAsyncHandler(async(req,res)=>{
+    const user = req.user;
+    const address = req.body.address;
+    if(!address){
+        return res.status(400).json({message:"Address is required"});
+    }
+    const data = await User.findByIdAndUpdate(user._Id,({$push:{address:address}}),{new:true}).select('address');
+    if(!data){
+        return res.status(500).json({message:"Failed to add address"});
+    }
+    return res.status(200).json({data,message:"Address added successfully"});
+});
+
+const deleteaddress = expressAsyncHandler(async(req,res)=>{
+    const user = req.user;
+    const address = req.body.address;
+    if(!address){
+        return res.status(400).json({message:"Address is required"});
+    }
+    const data = await User.findByIdAndUpdate(user._Id,({$pull:{address:address}}),{new:true}).select('address');
+    if(!data){
+        return res.status(500).json({message:"Failed to delete address"});
+    }
+    return res.status(200).json({data,message:"Address deleted successfully"});
+});
+
+const updateaddress = expressAsyncHandler(async(req,res)=>{
+    const user = req.user;
+    const oldAddress = req.body.oldAddress;
+    const newAddress = req.body.newAddress;
+    if(!oldAddress || !newAddress){
+        return res.status(400).json({message:"Both old and new addresses are required"});
+    }
+    const data = await User.findById(user._Id);
+    if(!data){
+        return res.status(404).json({message:"User not found"});
+    }
+    const addressIndex = data.address.indexOf(oldAddress);
+    if(addressIndex === -1){
+        return res.status(404).json({message:"Old address not found"});
+    }   
+    data.address[addressIndex] = newAddress;
+    await data.save();
+    return res.status(200).json(data.address,{message:"Address updated successfully"});
+});
+
+module.exports={myaddresses,addaddress,deleteaddress,updateaddress};
