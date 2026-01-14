@@ -10,7 +10,7 @@ const myaddresses = expressAsyncHandler(async(req,res)=>{
     return res.status(200).json(data);
 });
 
-const addaddress = expressAsyncHandler(async(req,res)=>{
+const addAddress = expressAsyncHandler(async(req,res)=>{
     const user = req.user;
     const address = req.body.address;
     if(!address){
@@ -23,7 +23,7 @@ const addaddress = expressAsyncHandler(async(req,res)=>{
     return res.status(200).json({data,message:"Address added successfully"});
 });
 
-const deleteaddress = expressAsyncHandler(async(req,res)=>{
+const deleteAddress = expressAsyncHandler(async(req,res)=>{
     const user = req.user;
     const address = req.body.address;
     if(!address){
@@ -36,7 +36,7 @@ const deleteaddress = expressAsyncHandler(async(req,res)=>{
     return res.status(200).json({data,message:"Address deleted successfully"});
 });
 
-const updateaddress = expressAsyncHandler(async(req,res)=>{
+const updateAddress = expressAsyncHandler(async(req,res)=>{
     const user = req.user;
     const oldAddress = req.body.oldAddress;
     const newAddress = req.body.newAddress;
@@ -56,4 +56,4 @@ const updateaddress = expressAsyncHandler(async(req,res)=>{
     return res.status(200).json(data.address,{message:"Address updated successfully"});
 });
 
-module.exports={myaddresses,addaddress,deleteaddress,updateaddress};
+module.exports={myaddresses,addAddress,deleteAddress,updateAddress};

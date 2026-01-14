@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const User = require('../models/User');
+const User = require('../model/User');
 const expressAsyncHandler=require('express-async-handler');
 
 const JWT_SECRET = process.env.JWT_SECRET 

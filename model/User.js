@@ -25,8 +25,19 @@ const userSchema = new mongoose.Schema({
     ],
     gender : {
         type : String,
+        enum : ['Male', 'Female', 'Other'],
         default : "NA"
-    }
+    },
+    verification_mail : {
+        type : Boolean,
+        default : false
+    },
+    orders : [
+        {
+            type : mongoose.Schema.Types.ObjectId,
+            ref : "Order"
+        }
+    ]
 });
 
 module.exports = mongoose.model('User', userSchema);
