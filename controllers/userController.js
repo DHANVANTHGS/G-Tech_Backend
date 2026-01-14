@@ -1,4 +1,4 @@
-const User = require('../models/User');
+const User = require('../model/User');
 const expressAsyncHandler = require('express-async-handler');
 
 const getProfile = expressAsyncHandler(async (req, res) => {
@@ -16,7 +16,7 @@ const getProfile = expressAsyncHandler(async (req, res) => {
 });
 
 const updateProfile = expressAsyncHandler(async(req,res)=>{
-    const {name,mail,mobileno}=req.body;
+    const {name,mail,mobileno,gender,verification_mail}=req.body;
     const user = req.user;
     if(!user){
         console.log("User not found in updateProfile");
@@ -26,6 +26,8 @@ const updateProfile = expressAsyncHandler(async(req,res)=>{
     if(name) updatedData.name = name;
     if(mail) updatedData.mail = mail;
     if(mobileno) updatedData.mobileno = mobileno;
+    if(gender) updatedData.gender = gender;
+    if(verification_mail !== undefined) updatedData.verification_mail = verification_mail;
     const updatedUser = await User.findByIdAndUpdate(user._id, updatedData, { new: true }).select('-password');
     if(!updatedUser){
         console.log("Failed to update user data for ID:", user._id);
