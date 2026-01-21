@@ -5,6 +5,7 @@ const connect = require('./config/config');
 const user = require('./routes/Users');
 const address = require('./routes/address');
 const orders = require('./routes/orders');
+const product = require('./routes/product');
 require('dotenv').config();
 
 const app = express();
@@ -17,6 +18,7 @@ const PORT = process.env.PORT || 3000;
 app.use('api/auth',auth);
 app.use('api/users',user);
 app.use('api/address',address);
+app.use('api/product',product);
 app.use('api/orders',orders);
 
 
