@@ -13,15 +13,17 @@ connect();
 
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(require('cors')());
 const PORT = process.env.PORT || 3000;
 
-app.use('api/auth',auth);
-app.use('api/users',user);
-app.use('api/address',address);
-app.use('api/product',product);
-app.use('api/orders',orders);
+app.use('/api/auth', auth);
+app.use('/api/users', user);
+app.use('/api/address', address);
+app.use('/api/product', product);
+app.use('/api/orders', orders);
+app.use('/api/cart', require('./routes/cart'));
 
 
-app.listen(PORT, (req,res) => {
+app.listen(PORT, (req, res) => {
     console.log(`Server is running on port ${PORT}`);
-} );
+});
