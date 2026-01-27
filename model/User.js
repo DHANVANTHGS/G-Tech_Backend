@@ -14,28 +14,33 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    mobileno : {
-        type : Number,
-        default : "NA"
+    mobileno: {
+        type: Number,
+        default: "NA"
     },
-    address : [
+    address: [
         {
-        type : String
-         }
+            type: String
+        }
     ],
-    gender : {
-        type : String,
-        enum : ['Male', 'Female', 'Other'],
-        default : "NA"
+    gender: {
+        type: String,
+        enum: ['Male', 'Female', 'Other'],
+        default: "NA"
     },
-    verification_mail : {
-        type : Boolean,
-        default : false
+    verification_mail: {
+        type: Boolean,
+        default: false
     },
-    orders : [
+    role: {
+        type: String,
+        enum: ['user', 'admin'],
+        default: 'user'
+    },
+    orders: [
         {
-            type : mongoose.Schema.Types.ObjectId,
-            ref : "Order"
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Order"
         }
     ]
 });
