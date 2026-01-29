@@ -1,38 +1,44 @@
-const mongoose = require('mongoose');
+const { db } = require('../config/config');
 
-const orderSchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+const collection = db.collection('orders');
+
+const Order = {
+    collection,
+
+    create: async (data) => {
+        const orderData = {
+            status: 'Payment Pending',
+            createdAt: new Date(),
+            items: [],
+            ...data
+        };
+        const docRef = await collection.add(orderData);
+        return { _id: docRef.id, ...orderData };
     },
-    items: [
-        {
-            productId: {
-                type: mongoose.Schema.Types.ObjectId,   
-                ref: 'Product',
-                required: true
-            },
-            quantity: { 
-                type: Number,
-                required: true,
-                default: 1
-            }
+
+    findById: async (id) => {
+        const doc = await collection.doc(id).get();
+        if (!doc.exists) return null;
+        return { _id: doc.id, ...doc.data() };
+    },
+
+    find: async (query = {}) => {
+        let ref = collection;
+        for (const [key, value] of Object.entries(query)) {
+            ref = ref.where(key, '==', value);
         }
-    ],
-    totalAmount: {
-        type: Number,
-        required: true
-    },  
-    status: {
-        type: String,
-        enum: ['Payment Pending','Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled-Refund pending','Cancelled-Refunded'],
-        default: 'Payment Pending'
+        const snapshot = await ref.get();
+        return snapshot.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
     },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    }
-});
 
-module.exports = mongoose.model('Order', orderSchema);
+    findByIdAndUpdate: async (id, update, options = {}) => {
+        await collection.doc(id).update(update);
+        if (options.new) {
+            const doc = await collection.doc(id).get();
+            return { _id: doc.id, ...doc.data() };
+        }
+        return { _id: id, ...update };
+    }
+};
+
+module.exports = Order;

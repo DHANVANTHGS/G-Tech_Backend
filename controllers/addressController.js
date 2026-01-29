@@ -1,13 +1,17 @@
 const User = require('../model/User');
+const { admin } = require('../config/config');
 const expressAsyncHandler = require('express-async-handler');
 
 const myaddresses = expressAsyncHandler(async (req, res) => {
     const user = req.user;
-    const data = await User.findById(user._id).select('address');
+    const data = await User.findById(user._id);
     if (!data) {
         return res.status(404).json({ message: "No addresses found" });
     }
-    return res.status(200).json(data);
+    // Return object with only address field to match previous behavior if needed, 
+    // or just return the address array?
+    // Previous code: res.json(data). Data was result of select('address'), which is { _id, address: [...] }
+    return res.status(200).json({ _id: data._id, address: data.address });
 });
 
 const addAddress = expressAsyncHandler(async (req, res) => {
@@ -16,11 +20,16 @@ const addAddress = expressAsyncHandler(async (req, res) => {
     if (!address) {
         return res.status(400).json({ message: "Address is required" });
     }
-    const data = await User.findByIdAndUpdate(user._id, ({ $push: { address: address } }), { new: true }).select('address');
-    if (!data) {
-        return res.status(500).json({ message: "Failed to add address" });
-    }
-    return res.status(200).json({ data, message: "Address added successfully" });
+
+    // Update
+    await User.findByIdAndUpdate(user._id, {
+        address: admin.firestore.FieldValue.arrayUnion(address)
+    }, { new: true });
+
+    // Fetch updated
+    const data = await User.findById(user._id);
+
+    return res.status(200).json({ data: { address: data.address }, message: "Address added successfully" });
 });
 
 const deleteAddress = expressAsyncHandler(async (req, res) => {
@@ -29,11 +38,14 @@ const deleteAddress = expressAsyncHandler(async (req, res) => {
     if (!address) {
         return res.status(400).json({ message: "Address is required" });
     }
-    const data = await User.findByIdAndUpdate(user._id, ({ $pull: { address: address } }), { new: true }).select('address');
-    if (!data) {
-        return res.status(500).json({ message: "Failed to delete address" });
-    }
-    return res.status(200).json({ data, message: "Address deleted successfully" });
+
+    await User.findByIdAndUpdate(user._id, {
+        address: admin.firestore.FieldValue.arrayRemove(address)
+    }, { new: true });
+
+    const data = await User.findById(user._id);
+
+    return res.status(200).json({ data: { address: data.address }, message: "Address deleted successfully" });
 });
 
 const updateAddress = expressAsyncHandler(async (req, res) => {
@@ -51,8 +63,15 @@ const updateAddress = expressAsyncHandler(async (req, res) => {
     if (addressIndex === -1) {
         return res.status(404).json({ message: "Old address not found" });
     }
+
+    // Since we can't atomically update an array element by index easily in Firestore without race condition 
+    // (unless we read, modify and write back with transaction), we will do read-modify-write.
+    // For simplicity here:
     data.address[addressIndex] = newAddress;
-    await data.save();
+
+    // We update the entire address array
+    await User.findByIdAndUpdate(user._id, { address: data.address });
+
     return res.status(200).json({ addresses: data.address, message: "Address updated successfully" });
 });
 

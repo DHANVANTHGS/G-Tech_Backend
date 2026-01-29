@@ -1,21 +1,19 @@
-const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const dotenv = require('dotenv');
 const User = require('./model/User');
 const Product = require('./model/Product');
-const connect = require('./config/config');
+// Config initializes Firebase automatically on require if env/file is present
+require('./config/config');
 
 dotenv.config();
 
 const seedData = async () => {
     try {
-        await connect();
-        console.log('Connected to MongoDB');
+        console.log('🔥 Connected to Firebase (via config)');
 
-        // Clear existing data (optional - comment out if you want to keep existing data)
-        // await User.deleteMany({});
-        // await Product.deleteMany({});
-        // console.log('Cleared existing data');
+        // Clear existing data (optional - implementation depends on models supporting deleteMany or similar)
+        // Since my simplified models don't have deleteMany, we skip clearing or would need to implement it.
+        // For now, we just add if not exists.
 
         // Hash password
         const hashedPassword = await bcrypt.hash('password123', 10);
@@ -43,6 +41,7 @@ const seedData = async () => {
         ];
 
         for (const user of users) {
+            // Model.findOne returns { _id, ...data } or null
             const existingUser = await User.findOne({ mail: user.mail });
             if (!existingUser) {
                 await User.create(user);
@@ -97,9 +96,10 @@ const seedData = async () => {
         ];
 
         for (const product of products) {
-            // Check if product exists by name to avoid duplicates on re-run
-            const existingProduct = await Product.findOne({ name: product.name });
-            if (!existingProduct) {
+            // Check if product exists by name 
+            // My Product.find returns array. Product.findOne not implemented in my model, let's implement checking via find
+            const existingProducts = await Product.find({ name: product.name });
+            if (existingProducts.length === 0) {
                 await Product.create(product);
                 console.log(`Created product: ${product.name}`);
             } else {

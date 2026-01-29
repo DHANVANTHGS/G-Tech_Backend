@@ -20,20 +20,52 @@ const login = expressAsyncHandler(async (req, res) => {
 });
 
 const signup = expressAsyncHandler(async (req, res) => {
+    console.log("🔔 Signup controller hit!");
     const { name, mail, password } = req.body;
+    console.log("📝 Signup Request:", JSON.stringify(req.body, null, 2));
+
     const existingUser = await User.findOne({ mail: mail });
     if (existingUser) {
+        console.log("⚠️ User already exists:", mail);
         return res.status(400).json({ message: "User already exists" });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({
+    console.log("🔒 Password hashed. Creating user...");
+
+    // User.create returns the created user object with _id
+    const newUser = await User.create({
         name: name,
         mail: mail,
         password: hashedPassword
     });
-    await newUser.save();
+    console.log("✅ User created successfully:", newUser._id);
+
     return res.status(201).json({ message: "User created successfully" });
 });
 
-module.exports = { login, signup };
 
+const updatePassword = expressAsyncHandler(async (req, res) => {
+    const user = req.user; // From middleware
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+        return res.status(400).json({ message: "Both old and new passwords are required" });
+    }
+
+    const userData = await User.findById(user._id);
+    if (!userData) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, userData.password);
+    if (!isMatch) {
+        return res.status(400).json({ message: "Invalid old password" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await User.findByIdAndUpdate(user._id, { password: hashedPassword });
+
+    return res.status(200).json({ message: "Password updated successfully" });
+});
+
+module.exports = { login, signup, updatePassword };

@@ -1,34 +1,49 @@
-const mongoose = require('mongoose');
+const { db } = require('../config/config');
 
-const ProductSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: true
+const collection = db.collection('products');
+
+const Product = {
+    collection,
+
+    create: async (data) => {
+        const productData = {
+            createdAt: new Date(),
+            cashOnDelivery: false,
+            ...data
+        };
+        const docRef = await collection.add(productData);
+        return { _id: docRef.id, ...productData };
     },
-    price: {
-        type: Number,
-        required: true
+
+    findById: async (id) => {
+        const doc = await collection.doc(id).get();
+        if (!doc.exists) return null;
+        return { _id: doc.id, ...doc.data() };
     },
-    description: {
-        type: String,
-        required: true
+
+    find: async (query = {}) => {
+        let ref = collection;
+        // Simple equality checks for now
+        for (const [key, value] of Object.entries(query)) {
+            ref = ref.where(key, '==', value);
+        }
+        const snapshot = await ref.get();
+        return snapshot.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
     },
-    category: {
-        type: String,
-        required: true
+
+    findByIdAndUpdate: async (id, update, options = {}) => {
+        await collection.doc(id).update(update);
+        if (options.new) {
+            const doc = await collection.doc(id).get();
+            return { _id: doc.id, ...doc.data() };
+        }
+        return { _id: id, ...update };
     },
-    stock: {
-        type: Number,
-        required: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
-    cashOnDelivery: {
-        type: Boolean,
-        default: false
+
+    findByIdAndDelete: async (id) => {
+        await collection.doc(id).delete();
+        return { _id: id };
     }
-});
+};
 
-module.exports = mongoose.model('Product', ProductSchema);
+module.exports = Product;

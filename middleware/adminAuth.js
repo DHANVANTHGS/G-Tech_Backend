@@ -5,9 +5,11 @@ const adminAuth = async (req, res, next) => {
     try {
         const token = req.header('Authorization').replace('Bearer ', '');
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findOne({ _id: decoded.userid, 'role': 'admin' });
 
-        if (!user) {
+        // Find user by ID then check role
+        const user = await User.findById(decoded.userid);
+
+        if (!user || user.role !== 'admin') {
             throw new Error();
         }
 
