@@ -32,12 +32,16 @@ const newOrder = expressAsyncHandler(async (req, res) => {
     console.log("📍 Requested Address:", address);
 
     // Address check logic (exact match)
-    if (check.address && check.address.includes(address)) {
-        orderAddress = address;
-    } else {
-        console.log("❌ Address mismatch. User has:", check.address, "Requested:", address);
-        return res.status(400).json({ message: "Address not found in user's address list" });
-    }
+    // Relaxed Address Logic: Use the address provided in the request
+    // if (check.address && check.address.includes(address)) {
+    //     orderAddress = address;
+    // } else {
+    //     // For now, accept the address sent by frontend
+    //     orderAddress = address;
+    //     // Optionally, add to user's address list?
+    //     // await User.findByIdAndUpdate(user._id, { address: admin.firestore.FieldValue.arrayUnion(address) });
+    // }
+    orderAddress = address;
 
     for (const item of products) {
         const product = await Product.findById(item.productId);

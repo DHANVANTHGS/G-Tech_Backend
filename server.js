@@ -29,7 +29,7 @@ app.use('/api/cart', require('./routes/cart'));
 app.use('/api/admin', require('./routes/admin'));
 
 const server = app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`Server v2 (Public Products) is running on port ${PORT}`);
 });
 
 // Handle errors

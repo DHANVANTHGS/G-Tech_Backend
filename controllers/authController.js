@@ -16,7 +16,16 @@ const login = expressAsyncHandler(async (req, res) => {
         return res.status(400).json({ message: "Invalid password" });
     }
     const token = jwt.sign({ userid: user._id, mail: user.mail }, JWT_SECRET, { expiresIn: '1d' });
-    return res.status(200).json({ token, message: "Login successful" });
+    return res.status(200).json({
+        token,
+        message: "Login successful",
+        user: {
+            id: user._id,
+            name: user.name,
+            email: user.mail,
+            role: user.role
+        }
+    });
 });
 
 const signup = expressAsyncHandler(async (req, res) => {
@@ -38,9 +47,19 @@ const signup = expressAsyncHandler(async (req, res) => {
         mail: mail,
         password: hashedPassword
     });
+    const token = jwt.sign({ userid: newUser._id, mail: newUser.mail }, JWT_SECRET, { expiresIn: '1d' });
     console.log("✅ User created successfully:", newUser._id);
 
-    return res.status(201).json({ message: "User created successfully" });
+    return res.status(201).json({
+        message: "User created successfully",
+        token,
+        user: {
+            id: newUser._id,
+            name: newUser.name,
+            email: newUser.mail,
+            role: newUser.role
+        }
+    });
 });
 
 

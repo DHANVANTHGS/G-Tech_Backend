@@ -61,7 +61,7 @@ const createProduct = expressAsyncHandler(async (req, res) => {
         description,
         category,
         stock,
-        cashOnDelivery
+        cashOnDelivery: cashOnDelivery || false
     });
     return res.status(201).json({ product, message: "Product created successfully" });
 });
