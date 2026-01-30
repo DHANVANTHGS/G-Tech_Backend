@@ -4,6 +4,24 @@ const User = require('../model/User');
 const Product = require('../model/Product');
 const { admin } = require('../config/config');
 
+// Helper function to convert Firestore Timestamp to ISO string
+const convertTimestamp = (timestamp) => {
+    if (!timestamp) return null;
+    // If it's a Firestore Timestamp
+    if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+        return timestamp.toDate().toISOString();
+    }
+    // If it's already a Date object
+    if (timestamp instanceof Date) {
+        return timestamp.toISOString();
+    }
+    // If it's already a string, return as is
+    if (typeof timestamp === 'string') {
+        return timestamp;
+    }
+    return null;
+};
+
 const newOrder = expressAsyncHandler(async (req, res) => {
     console.log("🔔 newOrder controller hit!");
     const user = req.user;
@@ -114,8 +132,16 @@ const myOrders = expressAsyncHandler(async (req, res) => {
     const orderPromises = userData.orders.map(orderId => Order.findById(orderId));
     const orders = (await Promise.all(orderPromises)).filter(o => o !== null);
 
-    // Populate products
+    // Populate products and convert timestamps
     for (let order of orders) {
+        // Convert timestamps to ISO strings
+        if (order.createdAt) {
+            order.createdAt = convertTimestamp(order.createdAt) || new Date().toISOString();
+        }
+        if (order.updatedAt) {
+            order.updatedAt = convertTimestamp(order.updatedAt);
+        }
+        
         if (order.items) {
             for (let item of order.items) {
                 // item.product is ID string currently
@@ -163,10 +189,36 @@ const getOrderDetail = expressAsyncHandler(async (req, res) => {
     return res.status(200).json(data);
 });
 
+// Helper function to convert Firestore Timestamp to ISO string
+const convertTimestamp = (timestamp) => {
+    if (!timestamp) return null;
+    // If it's a Firestore Timestamp
+    if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+        return timestamp.toDate().toISOString();
+    }
+    // If it's already a Date object
+    if (timestamp instanceof Date) {
+        return timestamp.toISOString();
+    }
+    // If it's already a string, return as is
+    if (typeof timestamp === 'string') {
+        return timestamp;
+    }
+    return null;
+};
+
 const getAllOrders = expressAsyncHandler(async (req, res) => {
     const orders = await Order.find({});
 
     for (let order of orders) {
+        // Convert timestamps to ISO strings
+        if (order.createdAt) {
+            order.createdAt = convertTimestamp(order.createdAt) || new Date().toISOString();
+        }
+        if (order.updatedAt) {
+            order.updatedAt = convertTimestamp(order.updatedAt);
+        }
+        
         if (order.user) {
             const u = await User.findById(order.user);
             if (u) {
