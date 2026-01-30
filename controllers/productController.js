@@ -2,7 +2,7 @@ const expressAsyncHandler = require('express-async-handler');
 const Product = require('../model/Product');
 
 const getproducts = expressAsyncHandler(async (req, res) => {
-    let products = await Product.find();
+    let products = await Product.find({});
 
     // Mock Fallback
     const { isMock } = require('../config/config');
@@ -27,6 +27,7 @@ const getproducts = expressAsyncHandler(async (req, res) => {
         );
     }
 
+    // Return both formats for compatibility
     return res.status(200).json({ products });
 });
 

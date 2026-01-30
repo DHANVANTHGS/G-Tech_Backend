@@ -24,8 +24,11 @@ const Order = {
 
     find: async (query = {}) => {
         let ref = collection;
-        for (const [key, value] of Object.entries(query)) {
-            ref = ref.where(key, '==', value);
+        // If query is empty, return all documents
+        if (Object.keys(query).length > 0) {
+            for (const [key, value] of Object.entries(query)) {
+                ref = ref.where(key, '==', value);
+            }
         }
         const snapshot = await ref.get();
         return snapshot.docs.map(doc => ({ _id: doc.id, ...doc.data() }));

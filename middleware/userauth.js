@@ -7,7 +7,8 @@ const userauth = async (req, res, next) => {
         return res.status(401).json({ message: 'No token provided' });
     }
     try {
-        const data = jwt.verify(token, process.env.JWT_SECRET);
+        const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+        const data = jwt.verify(token, JWT_SECRET);
         const mail = data.mail;
 
         // Admin Override Bypass

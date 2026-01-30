@@ -164,7 +164,7 @@ const getOrderDetail = expressAsyncHandler(async (req, res) => {
 });
 
 const getAllOrders = expressAsyncHandler(async (req, res) => {
-    const orders = await Order.find();
+    const orders = await Order.find({});
 
     for (let order of orders) {
         if (order.user) {
@@ -192,12 +192,25 @@ const getAllOrders = expressAsyncHandler(async (req, res) => {
 });
 
 const updateOrderStatus = expressAsyncHandler(async (req, res) => {
-    const { orderid, status } = req.body;
-    const order = await Order.findByIdAndUpdate(orderid, { status: status }, { new: true });
+    // Support both orderid and orderId for compatibility
+    const orderId = req.body.orderId || req.body.orderid;
+    const status = req.body.status;
+    const trackingId = req.body.trackingId || req.body.trackingNumber;
+    
+    if (!orderId || !status) {
+        return res.status(400).json({ message: "Order ID and status are required" });
+    }
+    
+    const updateData = { status: status };
+    if (trackingId) {
+        updateData.trackingId = trackingId;
+    }
+    
+    const order = await Order.findByIdAndUpdate(orderId, updateData, { new: true });
     if (!order) {
         return res.status(404).json({ message: "Order not found" });
     }
-    return res.status(200).json({ order, message: "Order status updated successfully" });
+    return res.status(200).json({ order, message: "Status Updated" });
 });
 
 module.exports = { newOrder, confirmOrder, myOrders, cancelOrder, getOrderDetail, getAllOrders, updateOrderStatus };

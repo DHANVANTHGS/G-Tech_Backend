@@ -3,8 +3,12 @@ const jwt = require('jsonwebtoken');
 
 const adminAuth = async (req, res, next) => {
     try {
-        const token = req.header('Authorization').replace('Bearer ', '');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const token = req.header('Authorization')?.replace('Bearer ', '');
+        if (!token) {
+            return res.status(401).send({ error: 'Please authenticate as admin.' });
+        }
+        const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+        const decoded = jwt.verify(token, JWT_SECRET);
 
         // Admin Override Bypass
         if (decoded.userid === 'admin-override-id') {

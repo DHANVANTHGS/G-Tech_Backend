@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const User = require('../model/User');
 const expressAsyncHandler = require('express-async-handler');
 
-const JWT_SECRET = process.env.JWT_SECRET
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
 
 const login = expressAsyncHandler(async (req, res) => {
     const { mail, password } = req.body;
