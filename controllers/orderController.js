@@ -98,6 +98,14 @@ const confirmOrder = expressAsyncHandler(async (req, res) => {
 
 const myOrders = expressAsyncHandler(async (req, res) => {
     const user = req.user;
+    const { isMock } = require('../config/config');
+    const { mockOrders } = require('../config/mockData');
+
+    if (isMock) {
+        console.log("⚠️ Using Mock Orders Data");
+        return res.status(200).json(mockOrders);
+    }
+
     const userData = await User.findById(user._id);
     if (!userData || !userData.orders || userData.orders.length === 0) {
         return res.status(200).json([]);

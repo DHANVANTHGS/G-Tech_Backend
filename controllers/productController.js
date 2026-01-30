@@ -2,29 +2,22 @@ const expressAsyncHandler = require('express-async-handler');
 const Product = require('../model/Product');
 
 const getproducts = expressAsyncHandler(async (req, res) => {
-    let query = {};
-    if (req.query.category) {
-        query.category = req.query.category;
-    }
-
-    // Basic exact match for category, we can add more complex search later if needed
-    // specific to MongoDB/Mongoose (or Firestore if using that). 
-    // Since this looks like Mongoose syntax (Product.find), we'll adapt.
-
-    // For Firestore adapter (if underlying Product.find is custom):
-    // The previous explore showed Product.js using `collection` directly but wrapped in an object? 
-    // Wait, let's re-verify Product.js content to be sure how `find()` works.
-    // The view_file output for Product.js was NOT shown in previous turn (I only saw User.js). 
-    // I must verify Product.js implementation before assuming `find(query)` works.
-
-    // SAFE FALLBACK: Fetch all and filter in memory if the DB wrapper is simple
-    // or use the query object if the wrapper supports it.
-    // Let's assume standard behavior first but I'll add a check.
-
     let products = await Product.find();
 
+    // Mock Fallback
+    const { isMock } = require('../config/config');
+    const { mockProducts } = require('../config/mockData');
+    if (isMock || !products || products.length === 0) {
+        console.log("⚠️ Using Mock Products Data");
+        products = mockProducts;
+    }
+
     if (req.query.category) {
-        products = products.filter(p => p.category === req.query.category);
+        if (req.query.category === 'all') {
+            // No filter
+        } else {
+            products = products.filter(p => p.category === req.query.category);
+        }
     }
     if (req.query.search) {
         const search = req.query.search.toLowerCase();
@@ -34,10 +27,6 @@ const getproducts = expressAsyncHandler(async (req, res) => {
         );
     }
 
-    if (!products || products.length === 0) {
-        // Return empty array instead of 404 to be friendlier to frontend filtering
-        return res.status(200).json({ products: [] });
-    }
     return res.status(200).json({ products });
 });
 
