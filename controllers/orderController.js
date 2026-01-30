@@ -189,58 +189,75 @@ const getOrderDetail = expressAsyncHandler(async (req, res) => {
     return res.status(200).json(data);
 });
 
-// Helper function to convert Firestore Timestamp to ISO string
-const convertTimestamp = (timestamp) => {
-    if (!timestamp) return null;
-    // If it's a Firestore Timestamp
-    if (timestamp.toDate && typeof timestamp.toDate === 'function') {
-        return timestamp.toDate().toISOString();
-    }
-    // If it's already a Date object
-    if (timestamp instanceof Date) {
-        return timestamp.toISOString();
-    }
-    // If it's already a string, return as is
-    if (typeof timestamp === 'string') {
-        return timestamp;
-    }
-    return null;
-};
-
 const getAllOrders = expressAsyncHandler(async (req, res) => {
-    const orders = await Order.find({});
-
-    for (let order of orders) {
-        // Convert timestamps to ISO strings
-        if (order.createdAt) {
-            order.createdAt = convertTimestamp(order.createdAt) || new Date().toISOString();
-        }
-        if (order.updatedAt) {
-            order.updatedAt = convertTimestamp(order.updatedAt);
-        }
+    try {
+        const { isMock } = require('../config/config');
+        console.log("📋 getAllOrders - Fetching all orders from Firestore...");
+        console.log(`🔍 isMock flag: ${isMock}`);
         
-        if (order.user) {
-            const u = await User.findById(order.user);
-            if (u) {
-                order.user = { _id: u._id, name: u.name, mail: u.mail };
-            }
+        const orders = await Order.find({});
+        console.log(`✅ Found ${orders ? orders.length : 0} orders in database`);
+        
+        if (!orders || orders.length === 0) {
+            console.log("⚠️ No orders found in database, returning empty array");
+            return res.status(200).json([]);
         }
-        if (order.items) {
-            for (let item of order.items) {
-                if (item.product) {
-                    const p = await Product.findById(item.product);
-                    if (p) {
-                        item.product = { _id: p._id, name: p.name, price: p.price };
+
+        for (let order of orders) {
+            // Convert timestamps to ISO strings
+            if (order.createdAt) {
+                order.createdAt = convertTimestamp(order.createdAt) || new Date().toISOString();
+            }
+            if (order.updatedAt) {
+                order.updatedAt = convertTimestamp(order.updatedAt);
+            }
+            
+            // Populate user data
+            if (order.user) {
+                try {
+                    const u = await User.findById(order.user);
+                    if (u) {
+                        order.user = { _id: u._id, name: u.name, mail: u.mail };
+                    } else {
+                        console.warn(`⚠️ User not found for order ${order._id}, user ID: ${order.user}`);
+                        order.user = { _id: order.user, name: 'Unknown User', mail: '' };
+                    }
+                } catch (userError) {
+                    console.error(`❌ Error fetching user for order ${order._id}:`, userError);
+                    order.user = { _id: order.user, name: 'Unknown User', mail: '' };
+                }
+            }
+            
+            // Populate product data
+            if (order.items && order.items.length > 0) {
+                for (let item of order.items) {
+                    if (item.product) {
+                        try {
+                            const p = await Product.findById(item.product);
+                            if (p) {
+                                item.product = { _id: p._id, name: p.name, price: p.price };
+                            } else {
+                                console.warn(`⚠️ Product not found for order ${order._id}, product ID: ${item.product}`);
+                                item.product = { _id: item.product, name: 'Unknown Product', price: 0 };
+                            }
+                        } catch (productError) {
+                            console.error(`❌ Error fetching product for order ${order._id}:`, productError);
+                            item.product = { _id: item.product, name: 'Unknown Product', price: 0 };
+                        }
                     }
                 }
             }
         }
-    }
 
-    if (!orders) {
-        return res.status(404).json({ message: "No orders found" });
+        console.log(`✅ Returning ${orders.length} orders to admin`);
+        return res.status(200).json(orders);
+    } catch (error) {
+        console.error("❌ Error in getAllOrders:", error);
+        return res.status(500).json({ 
+            message: "Error fetching orders", 
+            error: error.message 
+        });
     }
-    return res.status(200).json(orders);
 });
 
 const updateOrderStatus = expressAsyncHandler(async (req, res) => {
