@@ -16,7 +16,11 @@ connect();
 
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(require('cors')());
+app.use(require('cors')({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 const PORT = process.env.PORT || 3000;
 
@@ -27,6 +31,10 @@ app.use('/api/product', product);
 app.use('/api/orders', orders);
 app.use('/api/cart', require('./routes/cart'));
 app.use('/api/admin', require('./routes/admin'));
+
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', message: 'Backend is running' });
+});
 
 const server = app.listen(PORT, () => {
     console.log(`Server v2 (Public Products) is running on port ${PORT}`);
