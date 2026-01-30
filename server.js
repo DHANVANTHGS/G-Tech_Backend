@@ -46,3 +46,5 @@ process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
     // Keep running or exit gracefully
 });
+
+module.exports = app;
