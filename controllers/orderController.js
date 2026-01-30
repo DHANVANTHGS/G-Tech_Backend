@@ -106,6 +106,21 @@ const myOrders = expressAsyncHandler(async (req, res) => {
     const orderPromises = userData.orders.map(orderId => Order.findById(orderId));
     const orders = (await Promise.all(orderPromises)).filter(o => o !== null);
 
+    // Populate products
+    for (let order of orders) {
+        if (order.items) {
+            for (let item of order.items) {
+                // item.product is ID string currently
+                if (item.product) {
+                    const p = await Product.findById(item.product);
+                    if (p) {
+                        item.product = { _id: p._id, name: p.name, price: p.price, images: p.images };
+                    }
+                }
+            }
+        }
+    }
+
     return res.status(200).json(orders);
 });
 
