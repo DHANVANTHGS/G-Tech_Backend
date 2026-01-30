@@ -2,15 +2,15 @@ const expressAsyncHandler = require('express-async-handler');
 const Product = require('../model/Product');
 
 const getproducts = expressAsyncHandler(async (req, res) => {
+    console.log("📦 Fetching products from database...");
     let products = await Product.find({});
 
-    // Mock Fallback
-    const { isMock } = require('../config/config');
-    const { mockProducts } = require('../config/mockData');
-    if (isMock || !products || products.length === 0) {
-        console.log("⚠️ Using Mock Products Data");
-        products = mockProducts;
+    if (!products || products.length === 0) {
+        console.log("ℹ️ No products found in database");
+        return res.status(200).json({ products: [] });
     }
+    
+    console.log(`✅ Found ${products.length} products in database`);
 
     if (req.query.category) {
         if (req.query.category === 'all') {

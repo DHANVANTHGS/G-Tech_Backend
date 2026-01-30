@@ -116,13 +116,7 @@ const confirmOrder = expressAsyncHandler(async (req, res) => {
 
 const myOrders = expressAsyncHandler(async (req, res) => {
     const user = req.user;
-    const { isMock } = require('../config/config');
-    const { mockOrders } = require('../config/mockData');
-
-    if (isMock) {
-        console.log("⚠️ Using Mock Orders Data");
-        return res.status(200).json(mockOrders);
-    }
+    console.log("📋 Fetching orders for user:", user._id);
 
     const userData = await User.findById(user._id);
     if (!userData || !userData.orders || userData.orders.length === 0) {
@@ -191,10 +185,7 @@ const getOrderDetail = expressAsyncHandler(async (req, res) => {
 
 const getAllOrders = expressAsyncHandler(async (req, res) => {
     try {
-        const { isMock } = require('../config/config');
         console.log("📋 getAllOrders - Fetching all orders from Firestore...");
-        console.log(`🔍 isMock flag: ${isMock}`);
-        
         const orders = await Order.find({});
         console.log(`✅ Found ${orders ? orders.length : 0} orders in database`);
         
