@@ -32,6 +32,7 @@ app.use('/api/product', product);
 app.use('/api/orders', orders);
 app.use('/api/cart', require('./routes/cart'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/payment', require('./routes/paymentRoutes'));
 
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', message: 'Backend is running' });
