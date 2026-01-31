@@ -6,39 +6,36 @@ require('dotenv').config();
 const FIREBASE_PROJECT_ID = 'g-tech-6a7c5';
 
 try {
-  const serviceAccountPath = path.join(__dirname, '..', 'g-tech-6a7c5-firebase-adminsdk-fbsvc-4013c2b40f.json');
+  let serviceAccount = null;
 
-  let serviceAccount;
-  try {
-    // Try to load from serviceAccountKey.json file (for local development)
-    serviceAccount = require(serviceAccountPath);
-    console.log("✅ Using serviceAccountKey.json file");
-    console.log(`📦 Project ID: ${serviceAccount.project_id || FIREBASE_PROJECT_ID}`);
-  } catch (e) {
-    // If file doesn't exist, try environment variables
-    if (process.env.FIREBASE_CREDENTIALS_BASE64) {
-      try {
-        const decoded = Buffer.from(process.env.FIREBASE_CREDENTIALS_BASE64, 'base64').toString('utf8');
-        serviceAccount = JSON.parse(decoded);
-        console.log("✅ Using FIREBASE_CREDENTIALS_BASE64 env var");
-        console.log(`📦 Project ID: ${serviceAccount.project_id || FIREBASE_PROJECT_ID}`);
-      } catch (parseError) {
-        console.error("❌ Failed to parse FIREBASE_CREDENTIALS_BASE64", parseError);
-      }
-    } else if (process.env.FIREBASE_CREDENTIALS) {
-      try {
-        serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
-        console.log("✅ Using FIREBASE_CREDENTIALS env var");
-        console.log(`📦 Project ID: ${serviceAccount.project_id || FIREBASE_PROJECT_ID}`);
-      } catch (parseError) {
-        console.error("❌ Failed to parse FIREBASE_CREDENTIALS", parseError);
-      }
-    } else {
-      // No credentials found - will use mock mode
-      console.warn("⚠️ No Firebase credentials found. Using mock mode.");
-      console.warn("⚠️ Set FIREBASE_CREDENTIALS or FIREBASE_CREDENTIALS_BASE64 environment variable.");
-      console.warn(`📦 Expected Project ID: ${FIREBASE_PROJECT_ID}`);
-      serviceAccount = null;
+  // Priority 1: FIREBASE_CREDENTIALS_BASE64 (for CI/CD and production)
+  if (process.env.FIREBASE_CREDENTIALS_BASE64) {
+    try {
+      const decoded = Buffer.from(process.env.FIREBASE_CREDENTIALS_BASE64, 'base64').toString('utf8');
+      serviceAccount = JSON.parse(decoded);
+      console.log("✅ Using FIREBASE_CREDENTIALS_BASE64 env var");
+    } catch (parseError) {
+      console.error("❌ Failed to parse FIREBASE_CREDENTIALS_BASE64", parseError);
+    }
+  }
+  // Priority 2: FIREBASE_CREDENTIALS (JSON string in env)
+  else if (process.env.FIREBASE_CREDENTIALS) {
+    try {
+      serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
+      console.log("✅ Using FIREBASE_CREDENTIALS env var");
+    } catch (parseError) {
+      console.error("❌ Failed to parse FIREBASE_CREDENTIALS", parseError);
+    }
+  }
+  // Priority 3: Service account JSON file (for local development)
+  else {
+    const serviceAccountPath = path.join(__dirname, '..', 'g-tech-6a7c5-firebase-adminsdk-fbsvc-4013c2b40f.json');
+    try {
+      serviceAccount = require(serviceAccountPath);
+      console.log("✅ Using local service account JSON file");
+    } catch (e) {
+      console.warn("⚠️ No Firebase credentials found in env or local file. Using mock mode.");
+      console.warn("💡 To fix: Run the migration command or set FIREBASE_CREDENTIALS env var.");
     }
   }
 
@@ -51,11 +48,9 @@ try {
     console.log(`📦 Connected to project: ${serviceAccount.project_id || FIREBASE_PROJECT_ID}`);
   } else if (!serviceAccount) {
     console.warn('⚠️ Firebase not initialized - running in mock mode');
-    console.warn(`📦 Expected Project ID: ${FIREBASE_PROJECT_ID}`);
   }
 } catch (error) {
   console.error('❌ Firebase Connection Error:', error.message);
-  console.error(`📦 Expected Project ID: ${FIREBASE_PROJECT_ID}`);
 }
 
 const connectDB = () => {
