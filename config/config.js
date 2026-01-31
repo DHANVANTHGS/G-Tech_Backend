@@ -6,7 +6,7 @@ require('dotenv').config();
 const FIREBASE_PROJECT_ID = 'g-tech-6a7c5';
 
 try {
-  const serviceAccountPath = path.join(__dirname, 'serviceAccountKey.json');
+  const serviceAccountPath = path.join(__dirname, '..', 'g-tech-6a7c5-firebase-adminsdk-fbsvc-4013c2b40f.json');
 
   let serviceAccount;
   try {
