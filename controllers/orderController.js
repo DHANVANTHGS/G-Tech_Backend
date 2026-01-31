@@ -87,7 +87,7 @@ const newOrder = expressAsyncHandler(async (req, res) => {
         items: orderItems,
         totalAmount: Amount,
         address: orderAddress,
-        status: 'Payment Pending'
+        status: req.body.status || 'Pending'
     });
     console.log("✅ Order saved with ID:", newOrderData._id);
 
@@ -135,7 +135,7 @@ const myOrders = expressAsyncHandler(async (req, res) => {
         if (order.updatedAt) {
             order.updatedAt = convertTimestamp(order.updatedAt);
         }
-        
+
         if (order.items) {
             for (let item of order.items) {
                 // item.product is ID string currently
@@ -188,7 +188,7 @@ const getAllOrders = expressAsyncHandler(async (req, res) => {
         console.log("📋 getAllOrders - Fetching all orders from Firestore...");
         const orders = await Order.find({});
         console.log(`✅ Found ${orders ? orders.length : 0} orders in database`);
-        
+
         if (!orders || orders.length === 0) {
             console.log("⚠️ No orders found in database, returning empty array");
             return res.status(200).json([]);
@@ -202,7 +202,7 @@ const getAllOrders = expressAsyncHandler(async (req, res) => {
             if (order.updatedAt) {
                 order.updatedAt = convertTimestamp(order.updatedAt);
             }
-            
+
             // Populate user data
             if (order.user) {
                 try {
@@ -218,7 +218,7 @@ const getAllOrders = expressAsyncHandler(async (req, res) => {
                     order.user = { _id: order.user, name: 'Unknown User', mail: '' };
                 }
             }
-            
+
             // Populate product data
             if (order.items && order.items.length > 0) {
                 for (let item of order.items) {
@@ -244,9 +244,9 @@ const getAllOrders = expressAsyncHandler(async (req, res) => {
         return res.status(200).json(orders);
     } catch (error) {
         console.error("❌ Error in getAllOrders:", error);
-        return res.status(500).json({ 
-            message: "Error fetching orders", 
-            error: error.message 
+        return res.status(500).json({
+            message: "Error fetching orders",
+            error: error.message
         });
     }
 });
@@ -256,16 +256,16 @@ const updateOrderStatus = expressAsyncHandler(async (req, res) => {
     const orderId = req.body.orderId || req.body.orderid;
     const status = req.body.status;
     const trackingId = req.body.trackingId || req.body.trackingNumber;
-    
+
     if (!orderId || !status) {
         return res.status(400).json({ message: "Order ID and status are required" });
     }
-    
+
     const updateData = { status: status };
     if (trackingId) {
         updateData.trackingId = trackingId;
     }
-    
+
     const order = await Order.findByIdAndUpdate(orderId, updateData, { new: true });
     if (!order) {
         return res.status(404).json({ message: "Order not found" });
