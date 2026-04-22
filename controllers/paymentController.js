@@ -1,11 +1,14 @@
+const axios = require('axios');
 
-const Razorpay = require('razorpay');
-// crypto is a built-in Node module
-const crypto = require('crypto');
+const CASHFREE_BASE_URL = process.env.CASHFREE_ENV === 'production'
+    ? 'https://api.cashfree.com/pg'
+    : 'https://sandbox.cashfree.com/pg';
 
-const paymentInstance = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET
+const cashfreeHeaders = () => ({
+    'x-client-id': process.env.CASHFREE_APP_ID,
+    'x-client-secret': process.env.CASHFREE_SECRET_KEY,
+    'x-api-version': '2023-08-01',
+    'Content-Type': 'application/json'
 });
 
 // Create Order
@@ -17,51 +20,72 @@ exports.createOrder = async (req, res) => {
             return res.status(400).json({ success: false, message: "Amount is required" });
         }
 
-        const options = {
-            amount: amount * 100, // Razorpay works in smallest currency unit (paise for INR)
-            currency: currency || "INR",
-            receipt: `order_${Date.now()}`
+        const orderId = `order_${Date.now()}`;
+
+        const orderData = {
+            order_id: orderId,
+            order_amount: amount,
+            order_currency: currency || 'INR',
+            customer_details: {
+                customer_id: `cust_${Date.now()}`,
+                customer_phone: '9999999999'
+            }
         };
 
-        const order = await paymentInstance.orders.create(options);
+        const response = await axios.post(
+            `${CASHFREE_BASE_URL}/orders`,
+            orderData,
+            { headers: cashfreeHeaders() }
+        );
 
         res.status(200).json({
             success: true,
-            order
+            order: response.data
         });
     } catch (error) {
-        console.error("Error creating Razorpay order:", error);
-        res.status(500).json({ success: false, message: "Something went wrong at payment creation" });
+        console.error("Error creating Cashfree order:", error.response?.data || error.message);
+        res.status(500).json({
+            success: false,
+            message: "Something went wrong at payment creation",
+            error: error.response?.data
+        });
     }
 };
 
-// Verify Payment (Optional but recommended for security)
+// Verify Payment
 exports.verifyPayment = async (req, res) => {
     try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        const { order_id } = req.body;
 
-        const body = razorpay_order_id + "|" + razorpay_payment_id;
+        if (!order_id) {
+            return res.status(400).json({ success: false, message: "order_id is required" });
+        }
 
-        const expectedSignature = crypto
-            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-            .update(body.toString())
-            .digest('hex');
+        const response = await axios.get(
+            `${CASHFREE_BASE_URL}/orders/${order_id}`,
+            { headers: cashfreeHeaders() }
+        );
 
-        if (expectedSignature === razorpay_signature) {
-            // Payment is authentic & successful
-            // Here you can save payment details to your database
+        const orderData = response.data;
+
+        if (orderData.order_status === 'PAID') {
             res.status(200).json({
                 success: true,
-                message: "Payment verified successfully"
+                message: "Payment verified successfully",
+                order: orderData
             });
         } else {
             res.status(400).json({
                 success: false,
-                message: "Invalid signature sent!"
+                message: `Payment not completed. Status: ${orderData.order_status}`
             });
         }
     } catch (error) {
-        console.error("Error verifying payment:", error);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+        console.error("Error verifying Cashfree payment:", error.response?.data || error.message);
+        res.status(500).json({
+            success: false,
+            message: "Payment verification failed",
+            error: error.response?.data
+        });
     }
 };
