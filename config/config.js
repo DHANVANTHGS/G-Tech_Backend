@@ -68,7 +68,8 @@ try {
       doc: () => ({ get: async () => ({ exists: false }) }),
       get: async () => ({ size: 0, docs: [], forEach: () => { } }),
       add: async () => { throw new Error("DB not connected"); },
-      where: function () { return this; } // Allow chaining where()
+      where: function () { return this; }, // Allow chaining where()
+      limit: function () { return this; } // Allow chaining limit()
     })
   };
 }

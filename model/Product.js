@@ -21,6 +21,16 @@ const Product = {
         return { _id: doc.id, ...doc.data() };
     },
 
+    hasAny: async () => {
+        const snapshot = await collection.limit(1).get();
+        return snapshot.size > 0;
+    },
+
+    count: async () => {
+        const snapshot = await collection.get();
+        return snapshot.size;
+    },
+
     find: async (query = {}) => {
         let ref = collection;
         // Simple equality checks for now

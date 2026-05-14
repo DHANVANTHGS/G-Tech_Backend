@@ -31,6 +31,12 @@ const getproducts = expressAsyncHandler(async (req, res) => {
     return res.status(200).json({ products });
 });
 
+const checkProductsExist = expressAsyncHandler(async (req, res) => {
+    const hasProducts = await Product.hasAny();
+    const count = hasProducts ? await Product.count() : 0;
+    return res.status(200).json({ hasProducts, count });
+});
+
 const getproduct = expressAsyncHandler(async (req, res) => {
     const { id } = req.params;
     // Firestore IDs are strings, no specific validation needed unless we want to check length.
@@ -77,4 +83,4 @@ const deleteProduct = expressAsyncHandler(async (req, res) => {
     return res.status(200).json({ message: "Product deleted successfully" });
 });
 
-module.exports = { getproducts, getproduct, createProduct, updateProduct, deleteProduct };
+module.exports = { getproducts, checkProductsExist, getproduct, createProduct, updateProduct, deleteProduct };
